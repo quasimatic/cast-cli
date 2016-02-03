@@ -1,5 +1,5 @@
 exports.config = {
-    
+
     //
     // ==================
     // Specify Test Files
@@ -87,14 +87,14 @@ exports.config = {
     // The following are supported: dot (default), spec and xunit
     // see also: http://webdriver.io/guide/testrunner/reporters.html
     reporter: 'dot',
-    
+
     //
     // Options to be passed to Mocha.
     // See the full list at http://mochajs.org/
     mochaOpts: {
         ui: 'bdd'
     },
-    
+
     //
     // =====
     // Hooks
@@ -119,7 +119,26 @@ exports.config = {
         chai.Should();
 
         Cast = require('./lib/cast').default;
-        cast = new Cast(this);
+        var options = this;
+
+        options.urlHooks = [
+            function(url, glance) {
+                return new Promise(function(resolve, reject) {
+                    return glance.get("$TITLE$").then((title) => {
+                        if (title == "Title needs to change") {
+                            return glance.
+                                click("Change Title")
+                                .then(resolve)
+                                .catch(reject)
+                        }
+
+                        resolve();
+                    });
+                });
+            }
+        ];
+
+        cast = new Cast(options);
         glance = cast.glance;
     },
     //

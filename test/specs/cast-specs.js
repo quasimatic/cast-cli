@@ -1,4 +1,4 @@
-describe('Cast', function () {
+describe('Cast', function() {
     it("should go to url", function*() {
         yield cast.set({
             "$URL$": "file:///" + __dirname + "/examples/page1.html"
@@ -30,8 +30,34 @@ describe('Cast', function () {
         text.should.equal("Data 2")
     });
 
+    it("should support url hooks", function*() {
+        this.timeout(30000);
+        yield cast.set({ "$URL$": "file:///" + __dirname + "/examples/url-hook.html" });
+
+        var title = yield cast.glance.get("$TITLE$");
+        title.should.equal("Title Changed");
+    });
+
+    it.skip("should support custom keys", function*() {
+        yield cast.set({
+            "$URL$": "file:///" + __dirname + "/examples/page3.html",
+            "custom": {
+                "text-1": "Data 1",
+                "text-2": "Data 2"
+            }
+        });
+
+        var text = yield cast.glance.get("text-1")
+        text.should.equal("Data 1")
+
+        var text = yield cast.glance.get("text-2")
+        text.should.equal("Data 2")
+    });
+
     it.skip("should go to multiple urls and set value", function*() {
-        yield cast.glance.execute(function(){ localStorage.clear()});
+        yield cast.glance.execute(function() {
+            localStorage.clear()
+        });
 
         yield cast.set([
             {

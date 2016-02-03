@@ -18,8 +18,7 @@
   },
   "homepage": "https://github.com/semiautomatic/cast#readme",
   "dependencies": {
-    "glance-webdriver": "0.0.7",
-    "graphql": "^0.4.14"
+    "glance-webdriver": "0.0.7"
   },
   "devDependencies": {
     "babel": "^6.3.26",
