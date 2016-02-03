@@ -2,9 +2,9 @@ import Glance from "glance-webdriver";
 
 var setStrategies = [
     function url(state, glance) {
-        if (state.url) {
-            var url = state.url;
-            delete state.url;
+        var url = state['$URL$'];
+        if (url) {
+            delete state['$URL$'];
             return glance.url(url)
         }
 

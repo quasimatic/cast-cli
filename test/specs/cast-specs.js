@@ -1,15 +1,15 @@
 describe('Cast', function () {
     it("should go to url", function*() {
         yield cast.set({
-            "url": "file:///" + __dirname + "/examples/page1.html"
+            "$URL$": "file:///" + __dirname + "/examples/page1.html"
         });
 
-        (yield cast.glance.get("PAGETITLE")).should.equal("Page 1")
+        (yield cast.glance.get("$TITLE$")).should.equal("Page 1")
     });
 
     it("should set value", function*() {
         yield cast.set({
-            "url": "file:///" + __dirname + "/examples/page1.html",
+            "$URL$": "file:///" + __dirname + "/examples/page1.html",
             "text-1": "Data 1"
         });
 
@@ -18,7 +18,7 @@ describe('Cast', function () {
 
     it("should set multiple values", function*() {
         yield cast.set({
-            "url": "file:///" + __dirname + "/examples/page1.html",
+            "$URL$": "file:///" + __dirname + "/examples/page1.html",
             "text-1": "Data 1",
             "text-2": "Data 2"
         });
@@ -35,11 +35,11 @@ describe('Cast', function () {
 
         yield cast.set([
             {
-                "url": "file:///" + __dirname + "/examples/page1.html",
+                "$URL$": "file:///" + __dirname + "/examples/page1.html",
                 "text-1": "Data 1"
             },
             {
-                "url": "file:///" + __dirname + "/examples/page2.html",
+                "$URL$": "file:///" + __dirname + "/examples/page2.html",
                 "text-1": "Data 2"
             }
         ]);
