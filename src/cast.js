@@ -1,5 +1,44 @@
 import Glance from "glance-webdriver";
 
+function trySet(glance, key, state, parentKeys) {
+    var parents = parentKeys.slice();
+
+    return new Promise(function(resolve, reject) {
+        console.log("trySet", key, state[key])
+        return glance.set(key, state[key]).then(()=>{
+            console.log("Resolved")
+            resolve()
+        }).catch(()=> {
+            console.log("Error")
+            let parent = parents.shift();
+            console.log(parent)
+            if (parent)
+                trySet(glance, parent + ">key", state, parents)
+            else
+                reject();
+
+        });
+    })
+}
+
+function glanceSet(state, urlHooks, glance, parentKeys) {
+    parentKeys = parentKeys || [];
+    console.log("GlanceSet", state)
+    return new Promise(function(resolve, reject) {
+        return Object.keys(state).reduce((p1, key) => p1.then(()=> {
+            if (typeof(state[key]) == "object") {
+                console.log(key, ": Object")
+                parentKeys.unshift(key)
+                return glanceSet(state[key], urlHooks, glance, parentKeys);
+            }
+            else {
+                return trySet(glance, key, state, parentKeys)
+            }
+
+        }), Promise.resolve()).then(resolve).catch(reject);
+    });
+}
+
 var setStrategies = [
     function url(state, urlHooks, glance) {
         var url = state['$URL$'];
@@ -13,9 +52,7 @@ var setStrategies = [
         return glance;
     },
 
-    function glaceSet(state, urlHooks, glance) {
-        return Object.keys(state).reduce((p1, key) => p1.then(()=> glance.set(key, state[key])), Promise.resolve());
-    }
+    glanceSet
 ];
 
 class Cast {

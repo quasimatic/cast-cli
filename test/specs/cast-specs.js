@@ -38,19 +38,20 @@ describe('Cast', function() {
         title.should.equal("Title Changed");
     });
 
-    it.skip("should support custom keys", function*() {
+    it("should support nested keys as a glance container", function*() {
+        this.timeout(30000);
         yield cast.set({
-            "$URL$": "file:///" + __dirname + "/examples/page3.html",
-            "custom": {
+            "$URL$": "file:///" + __dirname + "/examples/custom-key.html",
+            "wrapper-1": {
                 "text-1": "Data 1",
                 "text-2": "Data 2"
             }
         });
 
-        var text = yield cast.glance.get("text-1")
+        var text = yield cast.glance.get("wrapper-1>text-1")
         text.should.equal("Data 1")
 
-        var text = yield cast.glance.get("text-2")
+        var text = yield cast.glance.get("wrapper-1>text-2")
         text.should.equal("Data 2")
     });
 
