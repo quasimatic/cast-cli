@@ -1,40 +1,66 @@
 import Glance from "glance-webdriver";
 
-function trySet(glance, key, state, parentKeys) {
-    var parents = parentKeys.slice();
+function trySet(glance, key, state, remainingKeys, parentStack) {
+    parentStack = parentStack || [];
+    var parents = remainingKeys.slice();
+    var fullKey = key;
+    if (parentStack.length > 0)
+        fullKey = parentStack.join(">") + ">" + key
 
-  //  return new Promise(function(resolve, reject) {
-    //    console.log("trySet", key, state[key])
-        return glance.set(key, state[key]).then(()=>{
-            console.log("Resolved")
-            return Promise.resolve();
-        }).catch(()=> {
-            console.log("Error")
-            let parent = parents.shift();
-            console.log(parent)
-            if (parent)
-                return trySet(glance, parent + ">key", state, parents)
-            else
-                return Promise.reject();
+    console.log("trySet", key, fullKey, state[key])
 
-        });
-    //})
+    return new Promise((resolve, reject)=> {
+        glance.set(fullKey, state[key]).then((value)=> {
+                console.log("THEN:", value);
+                resolve(value);
+            },
+            (reason)=> {
+                console.log("CATCH:", reason)
+
+                var parent = parents.shift();
+                if (parent) {
+                    parentStack.push(parent);
+                    console.log('here')
+                    return trySet(glance, key, state, parents, parentStack).then(resolve, reject)
+                    //return Promise.reject();
+                }
+
+                reject(reason);
+            });
+
+    })
+
+
+    /*.catch((reason)=> {
+     //        console.log("Error:", err)
+     var parent = parents.shift();
+     if (parent) {
+     parentStack.push(parent);
+     return trySet(glance, key, state, parents, parentStack)
+     }
+     else {
+     console.log("Throwing error")
+     return Promise.reject(reason)
+     }
+     });*/
 }
 
 function glanceSet(state, urlHooks, glance, parentKeys) {
     parentKeys = parentKeys || [];
-    console.log("GlanceSet", state)
 
-    return Object.keys(state).reduce((p1, key) => p1.then(()=> {
-        if (typeof(state[key]) == "object") {
-            console.log(key, ": Object")
-            parentKeys.unshift(key)
-            return glanceSet(state[key], urlHooks, glance, parentKeys);
-        }
-        else {
-            return trySet(glance, key, state, parentKeys)
-        }
-    }), Promise.resolve());
+    return new Promise((resolve, reject)=> {
+        Object.keys(state).reduce((p1, key) => p1.then(()=> {
+            if (typeof(state[key]) == "object") {
+                parentKeys.unshift(key)
+                return glanceSet(state[key], urlHooks, glance, parentKeys);
+            }
+            else {
+
+                return trySet(glance, key, state, parentKeys)
+            }
+        }), Promise.resolve()).then(resolve, reject);
+    })
+
 }
 
 var setStrategies = [
@@ -42,9 +68,7 @@ var setStrategies = [
         var url = state['$URL$'];
         if (url) {
             delete state['$URL$'];
-            return new Promise((resolve, reject) => {
-                glance.url(url).then(() => urlHooks.reduce((p1, hook) => p1.then(()=>hook(url, glance)), Promise.resolve()).then(resolve))
-            });
+            return glance.url(url).then(() => urlHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(glance), url)), Promise.resolve()))
         }
 
         return glance;

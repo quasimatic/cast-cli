@@ -86,7 +86,7 @@ exports.config = {
     // Test reporter for stdout.
     // The following are supported: dot (default), spec and xunit
     // see also: http://webdriver.io/guide/testrunner/reporters.html
-    reporter: 'dot',
+    reporter: 'spec',
 
     //
     // Options to be passed to Mocha.
@@ -122,19 +122,18 @@ exports.config = {
         var options = this;
 
         options.urlHooks = [
-            function(url, glance) {
-                return new Promise(function(resolve, reject) {
-                    return glance.get("$TITLE$").then((title) => {
+            function(url) {
+               // return new Promise(function(resolve, reject) {
+                    return this.get("$TITLE$").then(function(title){
                         if (title == "Title needs to change") {
-                            return glance.
-                                click("Change Title")
-                                .then(resolve)
-                                .catch(reject)
+                            console.log('changing title')
+                            return this.click("Change Title")
+                                //.then(resolve, reject);
                         }
 
-                        resolve();
+                        //resolve();
                     });
-                });
+                //});
             }
         ];
 
