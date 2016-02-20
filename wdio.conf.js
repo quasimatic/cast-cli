@@ -123,17 +123,11 @@ exports.config = {
 
         options.urlHooks = [
             function(url) {
-               // return new Promise(function(resolve, reject) {
-                    return this.get("$TITLE$").then(function(title){
-                        if (title == "Title needs to change") {
-                            console.log('changing title')
-                            return this.click("Change Title")
-                                //.then(resolve, reject);
-                        }
-
-                        //resolve();
-                    });
-                //});
+                return this.get("$TITLE$").then(function(title) {
+                    if (title == "Title needs to change") {
+                        return this.click("Change Title")
+                    }
+                });
             }
         ];
 

@@ -46,9 +46,7 @@ describe('Cast', function() {
                 "text-1": "Data 1",
                 "text-2": "Data 2"
             }
-        }).catch((reason)=>{
-            console.log("REASONS", reason)
-        });
+        })
 
         var text = yield cast.glance.get("wrapper-1>text-1")
         text.should.equal("Data 1")

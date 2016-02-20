@@ -7,42 +7,18 @@ function trySet(glance, key, state, remainingKeys, parentStack) {
     if (parentStack.length > 0)
         fullKey = parentStack.join(">") + ">" + key
 
-    console.log("trySet", key, fullKey, state[key])
-
     return new Promise((resolve, reject)=> {
-        glance.set(fullKey, state[key]).then((value)=> {
-                console.log("THEN:", value);
-                resolve(value);
-            },
+        glance.set(fullKey, state[key]).then(resolve,
             (reason)=> {
-                console.log("CATCH:", reason)
-
                 var parent = parents.shift();
                 if (parent) {
                     parentStack.push(parent);
-                    console.log('here')
-                    return trySet(glance, key, state, parents, parentStack).then(resolve, reject)
-                    //return Promise.reject();
+                    return resolve(trySet(glance, key, state, parents, parentStack))
                 }
 
-                reject(reason);
+                return reject(reason);
             });
-
-    })
-
-
-    /*.catch((reason)=> {
-     //        console.log("Error:", err)
-     var parent = parents.shift();
-     if (parent) {
-     parentStack.push(parent);
-     return trySet(glance, key, state, parents, parentStack)
-     }
-     else {
-     console.log("Throwing error")
-     return Promise.reject(reason)
-     }
-     });*/
+    });
 }
 
 function glanceSet(state, urlHooks, glance, parentKeys) {

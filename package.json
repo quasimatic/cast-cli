@@ -5,7 +5,7 @@
   "main": "lib/cast.js",
   "scripts": {
     "build": "babel src -d lib",
-    "test": "node_modules/.bin/wdio wdio.conf.js"
+    "test": "npm run build; node_modules/.bin/wdio wdio.conf.js"
   },
   "repository": {
     "type": "git",
@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/semiautomatic/cast#readme",
   "dependencies": {
-    "glance-webdriver": "0.0.7"
+    "glance-webdriver": "0.1.9"
   },
   "devDependencies": {
     "babel": "^6.5.1",
