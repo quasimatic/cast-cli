@@ -21,14 +21,14 @@ function trySet(glance, key, state, remainingKeys, parentStack) {
     });
 }
 
-function glanceSet(state, urlHooks, glance, parentKeys) {
+function glanceSet(state, urlLoadedHooks, urlChangingHooks, glance, parentKeys) {
     parentKeys = parentKeys || [];
 
     return new Promise((resolve, reject)=> {
         Object.keys(state).reduce((p1, key) => p1.then(()=> {
             if (typeof(state[key]) == "object") {
                 parentKeys.unshift(key)
-                return glanceSet(state[key], urlHooks, glance, parentKeys);
+                return glanceSet(state[key], urlLoadedHooks, urlChangingHooks, glance, parentKeys);
             }
             else {
 
@@ -40,11 +40,15 @@ function glanceSet(state, urlHooks, glance, parentKeys) {
 }
 
 var setStrategies = [
-    function url(state, urlHooks, glance) {
+    function url(state, urlLoadedHooks, urlChangingHooks, glance) {
         var url = state['$URL$'];
         if (url) {
             delete state['$URL$'];
-            return glance.url(url).then(() => urlHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(glance), url)), Promise.resolve()))
+
+            return glance
+                .then(() => urlChangingHooks.reduce((p1, hook) => p1.then(()=> hook.call(new Glance(glance), url)), Promise.resolve()))
+                .url(url)
+                .then(() => urlLoadedHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(glance), url)), Promise.resolve()))
         }
 
         return glance;
@@ -56,7 +60,9 @@ var setStrategies = [
 class Cast {
     constructor(options) {
         this.glance = new Glance(options);
-        this.urlHooks = options.urlHooks;
+        this.urlLoadedHooks = options.urlLoadedHooks;
+        this.urlChangingHooks = options.urlChangingHooks;
+        this.endHooks = options.endHooks;
     }
 
     set(state) {
@@ -67,15 +73,23 @@ class Cast {
         else
             states = [state];
 
-        return states.reduce((p1, state)=> p1.then(() => this.eachSetStrategy(state, this.urlHooks, glance)), Promise.resolve())
+        return states.reduce((p1, state)=> p1.then(() => this.eachSetStrategy(state, this.urlLoadedHooks, this.urlChangingHooks, glance)), Promise.resolve())
+            .then(()=> {
+                return this.endHooks.reduce((p1, hook) =>
+                        p1.then(()=>
+                            hook.call(new Glance(glance))
+                        ),
+                    Promise.resolve()
+                )
+            });
     }
 
     get() {
 
     }
 
-    eachSetStrategy(state, urlHooks, glance) {
-        return setStrategies.reduce((p1, setStrategy)=> p1.then(()=> setStrategy(state, urlHooks, glance)), Promise.resolve());
+    eachSetStrategy(state, urlLoadedHooks, urlChangingHooks, glance) {
+        return setStrategies.reduce((p1, setStrategy)=> p1.then(()=> setStrategy(state, urlLoadedHooks, urlChangingHooks, glance)), Promise.resolve());
     }
 }
 

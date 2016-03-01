@@ -55,29 +55,28 @@ describe('Cast', function() {
         text.should.equal("Data 2")
     });
 
-    // it.skip("should go to multiple urls and set value", function*() {
-    //     yield cast.glance.execute(function() {
-    //         localStorage.clear()
-    //     });
-    //
-    //     yield cast.set([
-    //         {
-    //             "$URL$": "file:///" + __dirname + "/examples/page1.html",
-    //             "text-1": "Data 1"
-    //         },
-    //         {
-    //             "$URL$": "file:///" + __dirname + "/exadmples/page2.html",
-    //             "text-1": "Data 2"
-    //         }
-    //     ]);
-    //
-    //     yield cast.glance.url("file:///" + __dirname + "/examples/page1.html");
-    //     var text = yield cast.glance.get("text-1");
-    //     text.should.equal("Data 1");
-    //
-    //
-    //     yield cast.glance.url("file:///" + __dirname + "/examples/page2.html");
-    //     var text = yield cast.glance.get("text-1");
-    //     text.should.equal("Data 2");
-    // });
+    it("should go to multiple urls and set value", function*() {
+        yield cast.glance.url("file:///" + __dirname + "/examples/page1.html").execute(function() {
+            localStorage.clear()
+        });
+
+        yield cast.set([
+            {
+                "$URL$": "file:///" + __dirname + "/examples/page1.html",
+                "text-1": "Data 1"
+            },
+            {
+                "$URL$": "file:///" + __dirname + "/examples/page2.html",
+                "text-1": "Data 2"
+            }
+        ]);
+
+        yield cast.glance.url("file:///" + __dirname + "/examples/page1.html");
+        var text = yield cast.glance.get("text-1");
+        text.should.equal("Data 1");
+        
+        yield cast.glance.url("file:///" + __dirname + "/examples/page2.html");
+        var text = yield cast.glance.get("text-1");
+        text.should.equal("Data 2");
+    });
 });
