@@ -24,19 +24,15 @@ function trySet(glance, key, state, remainingKeys, parentStack) {
 function glanceSet(state, urlLoadedHooks, urlChangingHooks, glance, parentKeys) {
     parentKeys = parentKeys || [];
 
-    return new Promise((resolve, reject)=> {
-        Object.keys(state).reduce((p1, key) => p1.then(()=> {
-            if (typeof(state[key]) == "object") {
-                parentKeys.unshift(key)
-                return glanceSet(state[key], urlLoadedHooks, urlChangingHooks, glance, parentKeys);
-            }
-            else {
-
-                return trySet(glance, key, state, parentKeys)
-            }
-        }), Promise.resolve()).then(resolve, reject);
-    })
-
+    return Object.keys(state).reduce((p1, key) => p1.then(()=> {
+        if (typeof(state[key]) == "object") {
+            parentKeys.unshift(key)
+            return glanceSet(state[key], urlLoadedHooks, urlChangingHooks, glance, parentKeys);
+        }
+        else {
+            return trySet(glance, key, state, parentKeys)
+        }
+    }), Promise.resolve())
 }
 
 var setStrategies = [
@@ -60,9 +56,9 @@ var setStrategies = [
 class Cast {
     constructor(options) {
         this.glance = new Glance(options);
-        this.urlLoadedHooks = options.urlLoadedHooks;
-        this.urlChangingHooks = options.urlChangingHooks;
-        this.endHooks = options.endHooks;
+        this.urlLoadedHooks = options.urlLoadedHooks || [];
+        this.urlChangingHooks = options.urlChangingHooks || [];
+        this.endHooks = options.endHooks || [];
     }
 
     set(state) {
@@ -73,14 +69,10 @@ class Cast {
         else
             states = [state];
 
-        return states.reduce((p1, state)=> p1.then(() => this.eachSetStrategy(state, this.urlLoadedHooks, this.urlChangingHooks, glance)), Promise.resolve())
+
+        return states.reduce((p1, state)=> p1.then(() => this.eachSetStrategy(state, this.urlLoadedHooks, this.urlChangingHooks, this.glance)), Promise.resolve())
             .then(()=> {
-                return this.endHooks.reduce((p1, hook) =>
-                        p1.then(()=>
-                            hook.call(new Glance(glance))
-                        ),
-                    Promise.resolve()
-                )
+                return this.endHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(this.glance))), Promise.resolve())
             });
     }
 

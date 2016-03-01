@@ -74,7 +74,7 @@ describe('Cast', function() {
         yield cast.glance.url("file:///" + __dirname + "/examples/page1.html");
         var text = yield cast.glance.get("text-1");
         text.should.equal("Data 1");
-        
+
         yield cast.glance.url("file:///" + __dirname + "/examples/page2.html");
         var text = yield cast.glance.get("text-1");
         text.should.equal("Data 2");

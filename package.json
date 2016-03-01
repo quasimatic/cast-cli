@@ -2,6 +2,9 @@
   "name": "cast-webdriver",
   "version": "0.0.1",
   "description": "Set and get state of a web app",
+  "bin": {
+    "cast": "cast.js"
+  },
   "main": "lib/cast.js",
   "scripts": {
     "build": "babel src -d lib",
@@ -18,7 +21,7 @@
   },
   "homepage": "https://github.com/semiautomatic/cast#readme",
   "dependencies": {
-    "glance-webdriver": "0.1.10"
+    "glance-webdriver": "0.1.11"
   },
   "devDependencies": {
     "babel": "^6.5.1",
