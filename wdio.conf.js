@@ -121,36 +121,24 @@ exports.config = {
         Cast = require('./lib/cast').default;
         var options = this;
 
-        options.urlLoadedHooks = [
-            function(url) {
-                return this.get("$PAGE$:title").then(function(title) {
+        options.setAfterHooks = [
+            function(cast, key, value){
+                cast.glance.get("$PAGE$:title").then(function(title) {
                     if (title == "Title needs to change") {
                         return this.click("Change Title")
                     }
-
-                    return Promise.resolve();
                 });
-            }
-        ];
+            },
 
-        options.urlChangingHooks = [
-            function(url) {
-                return this.click("button-save").catch(function(err)
-                {
-                    return Promise.resolve();
-                });
-            }
-        ];
-
-        options.endHooks = [
-            function() {
-                return this.click("button-save").catch(function(err)
-                {
-                    return Promise.resolve();
-                });
+            function(cast, key, value){
+                if(key == "text-1") {
+                    cast.glance.click("button-save").catch(function(err) {
+                        return Promise.resolve();
+                    });
+                }
             }
         ]
-
+        
         cast = new Cast(options);
         glance = cast.glance;
     },

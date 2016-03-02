@@ -18,14 +18,15 @@ function glanceSet(state, cast, context) {
     let glance = cast.glance;
 
     return Object.keys(state).reduce((p1, key) => p1.then(()=> {
-        var parentSelector = key;
+        var newContext = {key: key};
 
         if (context && context.parentContainerSelector && context.parentContainerSelector != "")
-            parentSelector = context.parentContainerSelector + ">" + key
-
-        var newContext = {key: key, parentContainerSelector: parentSelector};
+            newContext.parentContainerSelector = context.parentContainerSelector + ">" + key
 
         if (typeof(state[key]) == "object") {
+            if(!newContext.parentContainerSelector)
+                newContext.parentContainerSelector = key;
+        
             return glanceSet(state[key], cast, newContext);
         }
         else {
@@ -35,32 +36,12 @@ function glanceSet(state, cast, context) {
 }
 
 var setStrategies = [
-    function url(state) {
-        let urlLoadedHooks = cast.urlLoadedHooks;
-        let urlChangingHooks = cast.urlChangingHooks;
-        let glance = cast.glance;
-
-        var url = state['$PAGE$:url'];
-        if (url) {
-            delete state['$PAGE$:url'];
-
-            return glance
-                .then(() => urlChangingHooks.reduce((p1, hook) => p1.then(()=> hook.call(new Glance(glance), url)), Promise.resolve()))
-                .url(url)
-                .then(() => urlLoadedHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(glance), url)), Promise.resolve()))
-        }
-
-        return glance;
-    },
-
     glanceSet
 ];
 
 class Cast {
     constructor(options) {
         this.glance = new Glance(options);
-        this.urlLoadedHooks = options.urlLoadedHooks || [];
-        this.urlChangingHooks = options.urlChangingHooks || [];
         this.endHooks = options.endHooks || [];
         this.setAfterHooks = options.setAfterHooks || [];
     }
@@ -88,8 +69,8 @@ class Cast {
         this.setAfterHooks.push(func);
     }
 
-    _eachSetStrategy(state, urlLoadedHooks, urlChangingHooks, glance) {
-        return setStrategies.reduce((p1, setStrategy)=> p1.then(()=> setStrategy(state, urlLoadedHooks, urlChangingHooks, glance)), Promise.resolve());
+    _eachSetStrategy(state, cast) {
+        return setStrategies.reduce((p1, setStrategy)=> p1.then(()=> setStrategy(state, cast)), Promise.resolve());
     }
 }
 
