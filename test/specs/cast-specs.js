@@ -79,4 +79,24 @@ describe('Cast', function() {
         var text = yield cast.glance.get("text-1");
         text.should.equal("Data 2");
     });
+
+    it("should have set after hooks", function*(){
+        this.timeout(30000);
+
+        cast.addSetAfterHook(function(cast, key, value){
+            if(key == "after-hook-text-1") {
+                cast.glance.click("button-change");
+            }
+        });
+
+        yield cast.set([
+            {
+                "$URL$": "file:///" + __dirname + "/examples/set-hooks.html",
+                "after-hook-text-1": "Data"
+            }
+        ]);
+
+        var text = yield cast.glance.get("text-1")
+        text.should.equal("Data saved")
+    })
 });
