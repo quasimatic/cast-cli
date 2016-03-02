@@ -40,9 +40,9 @@ var setStrategies = [
         let urlChangingHooks = cast.urlChangingHooks;
         let glance = cast.glance;
 
-        var url = state['$URL$'];
+        var url = state['$PAGE$:url'];
         if (url) {
-            delete state['$URL$'];
+            delete state['$PAGE$:url'];
 
             return glance
                 .then(() => urlChangingHooks.reduce((p1, hook) => p1.then(()=> hook.call(new Glance(glance), url)), Promise.resolve()))

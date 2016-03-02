@@ -1,15 +1,15 @@
 describe('Cast', function() {
     it("should go to url", function*() {
         yield cast.set({
-            "$URL$": "file:///" + __dirname + "/examples/page1.html"
+            "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html"
         });
 
-        (yield cast.glance.get("$TITLE$")).should.equal("Page 1")
+        (yield cast.glance.get("$PAGE$:title")).should.equal("Page 1")
     });
 
     it("should set value", function*() {
         yield cast.set({
-            "$URL$": "file:///" + __dirname + "/examples/page1.html",
+            "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
             "text-1": "Data 1"
         });
 
@@ -18,7 +18,7 @@ describe('Cast', function() {
 
     it("should set multiple values", function*() {
         yield cast.set({
-            "$URL$": "file:///" + __dirname + "/examples/page1.html",
+            "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
             "text-1": "Data 1",
             "text-2": "Data 2"
         });
@@ -32,16 +32,16 @@ describe('Cast', function() {
 
     it("should support url hooks", function*() {
         this.timeout(30000);
-        yield cast.set({"$URL$": "file:///" + __dirname + "/examples/url-hook.html"});
+        yield cast.set({"$PAGE$:url": "file:///" + __dirname + "/examples/url-hook.html"});
 
-        var title = yield cast.glance.get("$TITLE$");
+        var title = yield cast.glance.get("$PAGE$:title");
         title.should.equal("Title Changed");
     });
 
     it("should support nested keys as a glance container", function*() {
         this.timeout(30000);
         yield cast.set({
-            "$URL$": "file:///" + __dirname + "/examples/custom-key.html",
+            "$PAGE$:url": "file:///" + __dirname + "/examples/custom-key.html",
             "wrapper-1": {
                 "text-1": "Data 1",
                 "text-2": "Data 2"
@@ -62,11 +62,11 @@ describe('Cast', function() {
 
         yield cast.set([
             {
-                "$URL$": "file:///" + __dirname + "/examples/page1.html",
+                "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
                 "text-1": "Data 1"
             },
             {
-                "$URL$": "file:///" + __dirname + "/examples/page2.html",
+                "$PAGE$:url": "file:///" + __dirname + "/examples/page2.html",
                 "text-1": "Data 2"
             }
         ]);
@@ -91,7 +91,7 @@ describe('Cast', function() {
 
         yield cast.set([
             {
-                "$URL$": "file:///" + __dirname + "/examples/set-hooks.html",
+                "$PAGE$:url": "file:///" + __dirname + "/examples/set-hooks.html",
                 "after-hook-text-1": "Data"
             }
         ]);

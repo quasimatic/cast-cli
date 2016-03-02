@@ -123,7 +123,7 @@ exports.config = {
 
         options.urlLoadedHooks = [
             function(url) {
-                return this.get("$TITLE$").then(function(title) {
+                return this.get("$PAGE$:title").then(function(title) {
                     if (title == "Title needs to change") {
                         return this.click("Change Title")
                     }
