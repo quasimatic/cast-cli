@@ -13,8 +13,6 @@ function trySet(cast, key, state, context) {
 }
 
 function glanceSet(state, cast, context) {
-    let urlLoadedHooks = cast.urlLoadedHooks;
-    let urlChangingHooks = cast.urlChangingHooks;
     let glance = cast.glance;
 
     return Object.keys(state).reduce((p1, key) => p1.then(()=> {
