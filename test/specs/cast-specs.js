@@ -96,7 +96,7 @@ describe('Cast', function() {
             }
         ]);
 
-        var text = yield cast.glance.get("text-1")
-        text.should.equal("Data saved")
+        var text = yield cast.glance.get("text-1");
+        text.should.equal("Data saved");
     })
 });

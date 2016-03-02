@@ -1,44 +1,35 @@
 import Glance from "glance-webdriver";
 
-function trySet(cast, key, state, remainingKeys, parentStack) {
+function trySet(cast, key, state, context) {
     var glance = cast.glance;
 
-    parentStack = parentStack || [];
-    var parents = remainingKeys.slice();
     var fullKey = key;
-    if (parentStack.length > 0)
-        fullKey = parentStack.join(">") + ">" + key
+    if (context.parentContainerSelector && context.parentContainerSelector != "")
+        fullKey = context.parentContainerSelector + ">" + key;
 
-    return new Promise((resolve, reject)=> {
-        glance.set(fullKey, state[key]).then(() => {
-                return cast.setAfterHooks.reduce((p1, p2) => p1.then(()=> p2(cast, key, state[key])), Promise.resolve()).then(resolve, reject);
-            },
-            (reason)=> {
-                var parent = parents.shift();
-                if (parent) {
-                    parentStack.push(parent);
-                    return resolve(trySet(cast, key, state, parents, parentStack))
-                }
-
-                return reject(reason);
-            });
+    return glance.set(fullKey, state[key]).then(() => {
+        return cast.setAfterHooks.reduce((p1, p2) => p1.then(()=> p2(cast, key, state[key])), Promise.resolve());
     });
 }
 
-function glanceSet(state, cast, parentKeys) {
+function glanceSet(state, cast, context) {
     let urlLoadedHooks = cast.urlLoadedHooks;
     let urlChangingHooks = cast.urlChangingHooks;
     let glance = cast.glance;
 
-    parentKeys = parentKeys || [];
-
     return Object.keys(state).reduce((p1, key) => p1.then(()=> {
+        var parentSelector = key;
+
+        if (context && context.parentContainerSelector && context.parentContainerSelector != "")
+            parentSelector = context.parentContainerSelector + ">" + key
+
+        var newContext = {key: key, parentContainerSelector: parentSelector};
+
         if (typeof(state[key]) == "object") {
-            parentKeys.unshift(key)
-            return glanceSet(state[key], cast, parentKeys);
+            return glanceSet(state[key], cast, newContext);
         }
         else {
-            return trySet(cast, key, state, parentKeys)
+            return trySet(cast, key, state, newContext)
         }
     }), Promise.resolve())
 }
