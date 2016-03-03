@@ -1,6 +1,6 @@
 {
-  "name": "cast-webdriver",
-  "version": "0.0.1",
+  "name": "@quasimatic/cast",
+  "version": "0.0.3",
   "description": "Set and get state of a web app",
   "bin": {
     "cast": "cast.js"
@@ -12,16 +12,17 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/semiautomatic/cast.git"
+    "url": "git+https://github.com/quasimatic/cast.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/semiautomatic/cast/issues"
+    "url": "https://github.com/quasimatic/cast/issues"
   },
-  "homepage": "https://github.com/semiautomatic/cast#readme",
+  "homepage": "https://github.com/quasimatic/cast#readme",
   "dependencies": {
-    "glance-webdriver": "0.1.11"
+    "@quasimatic/glance": "0.1.11",
+    "command-line-args": "^2.1.6"
   },
   "devDependencies": {
     "babel": "^6.5.1",
