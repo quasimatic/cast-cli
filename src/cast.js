@@ -1,14 +1,14 @@
 import Glance from "glance-webdriver";
 
-function trySet(cast, key, state, context) {
+function trySet(cast, key, value, context) {
     var glance = cast.glance;
 
     var fullKey = key;
     if (context.parentContainerSelector && context.parentContainerSelector != "")
         fullKey = context.parentContainerSelector + ">" + key;
 
-    return glance.set(fullKey, state[key]).then(() => {
-        return cast.setAfterHooks.reduce((p1, p2) => p1.then(()=> p2(cast, key, state[key])), Promise.resolve());
+    return glance.set(fullKey, value).then(() => {
+        return cast.setAfterHooks.reduce((p1, p2) => p1.then(()=> p2(cast, key, value)), Promise.resolve());
     });
 }
 
@@ -16,19 +16,32 @@ function glanceSet(state, cast, context) {
     let glance = cast.glance;
 
     return Object.keys(state).reduce((p1, key) => p1.then(()=> {
-        var newContext = {key: key};
-
-        if (context && context.parentContainerSelector && context.parentContainerSelector != "")
-            newContext.parentContainerSelector = context.parentContainerSelector + ">" + key
-
-        if (typeof(state[key]) == "object") {
-            if(!newContext.parentContainerSelector)
-                newContext.parentContainerSelector = key;
-        
-            return glanceSet(state[key], cast, newContext);
+        if (cast.literalHooks[key]) {
+            return Promise.resolve(cast.literalHooks[key](this, key, state[key], context));
         }
         else {
-            return trySet(cast, key, state, newContext)
+            let values = state[key];
+            if (!Array.isArray(values)) {
+                values = [values]
+            }
+
+            return values.reduce((setP, value)=> setP.then(()=> {
+                    var newContext = {key: key};
+
+                    if (context && context.parentContainerSelector && context.parentContainerSelector != "")
+                        newContext.parentContainerSelector = context.parentContainerSelector + ">" + key
+
+                    if (typeof(value) == "object") {
+                        if (!newContext.parentContainerSelector)
+                            newContext.parentContainerSelector = key;
+
+                        return glanceSet(value, cast, newContext);
+                    }
+                    else {
+                        return trySet(cast, key, value, newContext)
+                    }
+                }
+            ), Promise.resolve());
         }
     }), Promise.resolve())
 }
@@ -40,11 +53,13 @@ var setStrategies = [
 class Cast {
     constructor(options) {
         this.glance = new Glance(options);
+        this.beforeAll = options.beforeAll || [];
+        this.literalHooks = options.literalHooks || {};
         this.endHooks = options.endHooks || [];
         this.setAfterHooks = options.setAfterHooks || [];
     }
 
-    set(state) {
+    apply(state) {
         var states;
 
         if (Array.isArray(state))
@@ -52,15 +67,16 @@ class Cast {
         else
             states = [state];
 
-
-        return states.reduce((p1, state)=> p1.then(() => this._eachSetStrategy(state, this)), Promise.resolve())
-            .then(()=> {
-                return this.endHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(this.glance))), Promise.resolve())
-            });
+        return this.beforeAll.reduce((p1, func)=> p1.then(() => func(this, state)), Promise.resolve()).then(()=> {
+            return states.reduce((p1, state)=> p1.then(() => this._eachSetStrategy(state, this)), Promise.resolve())
+                .then(()=> {
+                    return this.endHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(this.glance))), Promise.resolve())
+                });
+        })
     }
 
-    get() {
-
+    end() {
+        return this.glance.webdriverio.end();
     }
 
     addSetAfterHook(func) {

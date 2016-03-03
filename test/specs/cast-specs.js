@@ -1,6 +1,6 @@
 describe('Cast', function() {
     it("should go to url", function*() {
-        yield cast.set({
+        yield cast.apply({
             "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html"
         });
 
@@ -8,7 +8,7 @@ describe('Cast', function() {
     });
 
     it("should set value", function*() {
-        yield cast.set({
+        yield cast.apply({
             "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
             "text-1": "Data 1"
         });
@@ -17,7 +17,7 @@ describe('Cast', function() {
     });
 
     it("should set multiple values", function*() {
-        yield cast.set({
+        yield cast.apply({
             "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
             "text-1": "Data 1",
             "text-2": "Data 2"
@@ -32,7 +32,7 @@ describe('Cast', function() {
 
     it("should support url hooks", function*() {
         this.timeout(30000);
-        yield cast.set({"$PAGE$:url": "file:///" + __dirname + "/examples/url-hook.html"});
+        yield cast.apply({"$PAGE$:url": "file:///" + __dirname + "/examples/url-hook.html"});
 
         var title = yield cast.glance.get("$PAGE$:title");
         title.should.equal("Title Changed");
@@ -40,7 +40,7 @@ describe('Cast', function() {
 
     it("should support nested keys as a glance container", function*() {
         this.timeout(30000);
-        yield cast.set({
+        yield cast.apply({
             "$PAGE$:url": "file:///" + __dirname + "/examples/custom-key.html",
             "wrapper-1": {
                 "text-1": "Data 1",
@@ -60,7 +60,7 @@ describe('Cast', function() {
             localStorage.clear()
         });
 
-        yield cast.set([
+        yield cast.apply([
             {
                 "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
                 "text-1": "Data 1"
@@ -89,7 +89,7 @@ describe('Cast', function() {
             }
         });
 
-        yield cast.set([
+        yield cast.apply([
             {
                 "$PAGE$:url": "file:///" + __dirname + "/examples/set-hooks.html",
                 "after-hook-text-1": "Data"
