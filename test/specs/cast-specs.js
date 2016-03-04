@@ -1,102 +1,153 @@
+import Cast from '../../src/cast'
+
+let chai = require('chai');
+let chaiAsPromised = require('chai-as-promised');
+chai.use(chaiAsPromised);
+
+let expect = chai.expect;
+chai.Should();
+
+let cast;
+let glance;
+
 describe('Cast', function() {
-    it("should go to url", function*() {
-        yield cast.apply({
-            "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html"
+    this.timeout(5000);
+
+    before(function() {
+        cast = new Cast({
+            capabilities: [{
+                browserName: 'phantomjs'
+            }],
+            logLevel: 'silent',
+            coloredLogs: true,
+            screenshotPath: './errorShots/',
+            baseUrl: 'http://localhost',
+            waitforTimeout: 5000,
+            setAfterHooks: [
+                function(cast, key, value) {
+                    return cast.glance.webdriverio.getTitle().then(function(title) {
+                        if (title == "Title needs to change") {
+                            return cast.glance.click("Change Title");
+                        }
+                    });
+                },
+
+                function(cast, key, value) {
+                    if (key == "text-1") {
+                        return cast.glance.click("button-save").catch(function(err) {
+                            return Promise.resolve();
+                        });
+                    }
+                }
+            ]
         });
 
-        (yield cast.glance.get("$PAGE$:title")).should.equal("Page 1")
+        glance = cast.glance;
+    })
+
+    it("should go to url", function() {
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/page1.html"
+            })
+            .then(function() {
+                return Promise.resolve();
+                return cast.glance.get("$PAGE$:title").should.eventually.equal("Page 1")
+            })
+    })
+
+    it("should set value", function() {
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/page1.html",
+                "text-1": "Data 1"
+            })
+            .then(function() {
+                return cast.glance.get("text-1").should.eventually.equal("Data 1")
+            })
     });
 
-    it("should set value", function*() {
-        yield cast.apply({
-            "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
-            "text-1": "Data 1"
-        });
-
-        (yield cast.glance.get("text-1")).should.equal("Data 1")
-    });
-
-    it("should set multiple values", function*() {
-        yield cast.apply({
-            "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
-            "text-1": "Data 1",
-            "text-2": "Data 2"
-        });
-
-        var text = yield cast.glance.get("text-1")
-        text.should.equal("Data 1")
-
-        var text = yield cast.glance.get("text-2")
-        text.should.equal("Data 2")
-    });
-
-    it("should support url hooks", function*() {
-        this.timeout(30000);
-        yield cast.apply({"$PAGE$:url": "file:///" + __dirname + "/examples/url-hook.html"});
-
-        var title = yield cast.glance.get("$PAGE$:title");
-        title.should.equal("Title Changed");
-    });
-
-    it("should support nested keys as a glance container", function*() {
-        this.timeout(30000);
-        yield cast.apply({
-            "$PAGE$:url": "file:///" + __dirname + "/examples/custom-key.html",
-            "wrapper-1": {
+    it("should set multiple values", function() {
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/page1.html",
                 "text-1": "Data 1",
                 "text-2": "Data 2"
-            }
-        })
+            })
+            .then(function() {
+                return cast.glance.get("text-1").should.eventually.equal("Data 1")
+            })
 
-        var text = yield cast.glance.get("wrapper-1>text-1")
-        text.should.equal("Data 1")
-
-        var text = yield cast.glance.get("wrapper-1>text-2")
-        text.should.equal("Data 2")
+            .then(function() {
+                return cast.glance.get("text-2").should.eventually.equal("Data 2")
+            })
     });
 
-    it("should go to multiple urls and set value", function*() {
-        yield cast.glance.url("file:///" + __dirname + "/examples/page1.html").execute(function() {
-            localStorage.clear()
-        });
-
-        yield cast.apply([
-            {
-                "$PAGE$:url": "file:///" + __dirname + "/examples/page1.html",
-                "text-1": "Data 1"
-            },
-            {
-                "$PAGE$:url": "file:///" + __dirname + "/examples/page2.html",
-                "text-1": "Data 2"
-            }
-        ]);
-
-        yield cast.glance.url("file:///" + __dirname + "/examples/page1.html");
-        var text = yield cast.glance.get("text-1");
-        text.should.equal("Data 1");
-
-        yield cast.glance.url("file:///" + __dirname + "/examples/page2.html");
-        var text = yield cast.glance.get("text-1");
-        text.should.equal("Data 2");
+    it("should support url hooks", function() {
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/url-hook.html"
+            })
+            .then(function() {
+                return cast.glance.webdriverio.getTitle().should.eventually.equal("Title Changed");
+            })
     });
 
-    it("should have set after hooks", function*(){
-        this.timeout(30000);
+    it("should support nested keys as a glance container", function() {
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/custom-key.html",
+                "wrapper-1": {
+                    "text-1": "Data 1",
+                    "text-2": "Data 2"
+                }
+            })
+            .then(function() {
+                return cast.glance.get("wrapper-1>text-1").should.eventually.equal("Data 1")
+            })
+            .then(function() {
+                return cast.glance.get("wrapper-1>text-2").should.eventually.equal("Data 2")
+            })
+    });
 
-        cast.addSetAfterHook(function(cast, key, value){
-            if(key == "after-hook-text-1") {
-                cast.glance.click("button-change");
+    it("should go to multiple urls and set value", function() {
+        return cast.glance.url("file:///" + __dirname + "/examples/page1.html")
+            .execute(function() {
+                localStorage.clear()
+            })
+            .then(function() {
+                return cast.apply([
+                    {
+                        "$url": "file:///" + __dirname + "/examples/page1.html",
+                        "text-1": "Data 1"
+                    },
+                    {
+                        "$url": "file:///" + __dirname + "/examples/page2.html",
+                        "text-1": "Data 2"
+                    }
+                ]);
+            })
+            .then(function() {
+                return cast.glance.url("file:///" + __dirname + "/examples/page1.html")
+                    .get("text-1").should.eventually.equal("Data 1");
+            })
+
+            .then(function() {
+                return cast.glance.url("file:///" + __dirname + "/examples/page2.html")
+                    .get("text-1").should.eventually.equal("Data 2");
+            })
+    });
+
+    it("should have set after hooks", function() {
+        cast.addSetAfterHook(function(cast, key, value) {
+            if (key == "after-hook-text-1") {
+                return cast.glance.click("button-change");
             }
         });
 
-        yield cast.apply([
-            {
-                "$PAGE$:url": "file:///" + __dirname + "/examples/set-hooks.html",
-                "after-hook-text-1": "Data"
-            }
-        ]);
-
-        var text = yield cast.glance.get("text-1");
-        text.should.equal("Data saved");
+        return cast.apply([
+                {
+                    "$url": "file:///" + __dirname + "/examples/set-hooks.html",
+                    "after-hook-text-1": "Data"
+                }
+            ])
+            .then(function() {
+                return cast.glance.get("text-1").should.eventually.equal("Data saved");
+            });
     })
 });

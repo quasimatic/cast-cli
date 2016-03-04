@@ -1,4 +1,4 @@
-import Glance from "glance-webdriver";
+import Glance from "@quasimatic/glance";
 
 function trySet(cast, key, value, context) {
     var glance = cast.glance;
