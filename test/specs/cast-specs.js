@@ -1,14 +1,6 @@
-import Cast from '../../src/cast'
-
-let chai = require('chai');
-let chaiAsPromised = require('chai-as-promised');
-chai.use(chaiAsPromised);
-
-let expect = chai.expect;
-chai.Should();
+import Cast from '../../src/cast';
 
 let cast;
-let glance;
 
 describe('Cast', function() {
     this.timeout(5000);
@@ -41,18 +33,18 @@ describe('Cast', function() {
                 }
             ]
         });
+    });
 
-        glance = cast.glance;
-    })
+    after(function(){
+        cast.end();
+    });
 
     it("should go to url", function() {
         return cast.apply({
                 "$url": "file:///" + __dirname + "/examples/page1.html"
             })
-            .then(function() {
-                return Promise.resolve();
-                return cast.glance.get("$PAGE$:title").should.eventually.equal("Page 1")
-            })
+            .then(() => cast.glance.webdriverio.getTitle())
+            .should.eventually.equal("Page 1")
     })
 
     it("should set value", function() {
@@ -106,10 +98,7 @@ describe('Cast', function() {
     });
 
     it("should go to multiple urls and set value", function() {
-        return cast.glance.url("file:///" + __dirname + "/examples/page1.html")
-            .execute(function() {
-                localStorage.clear()
-            })
+        return cast.apply({"$url": "file:///" + __dirname + "/examples/page1.html"})
             .then(function() {
                 return cast.apply([
                     {
@@ -126,7 +115,6 @@ describe('Cast', function() {
                 return cast.glance.url("file:///" + __dirname + "/examples/page1.html")
                     .get("text-1").should.eventually.equal("Data 1");
             })
-
             .then(function() {
                 return cast.glance.url("file:///" + __dirname + "/examples/page2.html")
                     .get("text-1").should.eventually.equal("Data 2");

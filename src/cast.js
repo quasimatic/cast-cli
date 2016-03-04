@@ -16,8 +16,8 @@ function glanceSet(state, cast, context) {
     let glance = cast.glance;
 
     return Object.keys(state).reduce((p1, key) => p1.then(()=> {
-        if (cast.literalHooks[key]) {
-            return Promise.resolve(cast.literalHooks[key](this, key, state[key], context));
+        if (cast.literals[key]) {
+            return Promise.resolve(cast.literals[key](this, key, state[key], context));
         }
         else {
             let values = state[key];
@@ -53,9 +53,13 @@ var setStrategies = [
 class Cast {
     constructor(options) {
         this.glance = new Glance(options);
+        
         this.beforeAll = options.beforeAll || [];
-        this.literalHooks = options.literalHooks || {};
-        this.endHooks = options.endHooks || [];
+        this.afterAll = options.afterAll || [];
+        
+        this.literals = options.literals || {};
+        
+        
         this.setAfterHooks = options.setAfterHooks || [];
     }
 
@@ -70,7 +74,7 @@ class Cast {
         return this.beforeAll.reduce((p1, func)=> p1.then(() => func(this, state)), Promise.resolve()).then(()=> {
             return states.reduce((p1, state)=> p1.then(() => this._eachSetStrategy(state, this)), Promise.resolve())
                 .then(()=> {
-                    return this.endHooks.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(this.glance))), Promise.resolve())
+                    return this.afterAll.reduce((p1, hook) => p1.then(()=>hook.call(new Glance(this.glance))), Promise.resolve())
                 });
         })
     }

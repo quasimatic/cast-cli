@@ -8,7 +8,7 @@
   "main": "lib/cast.js",
   "scripts": {
     "build": "babel src -d lib",
-    "test": "npm run build && mocha --compilers js:babel-register test/**/*.js"
+    "test": "npm run build && mocha --compilers js:babel-register --require ./test/test_helper.js test/**/*.js"
   },
   "repository": {
     "type": "git",
