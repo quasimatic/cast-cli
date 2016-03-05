@@ -1,4 +1,5 @@
 import Glance from "@quasimatic/glance";
+import './promise-array';
 
 function trySet(cast, key, value, context) {
     var glance = cast.glance;
@@ -7,15 +8,14 @@ function trySet(cast, key, value, context) {
     if (context.containerSelector && context.containerSelector != "")
         fullKey = context.containerSelector + ">" + key;
 
-    return glance.set(fullKey, value).then(() => {
-        return cast.setAfterHooks.reduce((p1, p2) => p1.then(()=> p2(cast, key, value)), Promise.resolve());
-    });
+    return glance.set(fullKey, value)
+        .then(() => cast.setAfterHooks.resolveSeries(hook => hook(cast, key, value)));
 }
 
 function glanceSet(cast, state, context, OLDCONTEXT) {
     let glance = cast.glance;
 
-    return Object.keys(state).reduce((p1, key) => p1.then(()=> {
+    return Object.keys(state).resolveSeries(key => {
         if (cast.literals[key]) {
             return Promise.resolve(cast.literals[key](this, key, context[key], OLDCONTEXT));
         }
@@ -25,30 +25,27 @@ function glanceSet(cast, state, context, OLDCONTEXT) {
                 values = [values]
             }
 
-            return values.reduce((setP, value)=> setP.then(()=> {
-                    var newContext = {key: key};
+            return values.resolveSeries(value => {
+                var newContext = {key: key};
 
-                    if (OLDCONTEXT && OLDCONTEXT.containerSelector && OLDCONTEXT.containerSelector != "")
-                        newContext.containerSelector = OLDCONTEXT.containerSelector + ">" + key
+                if (OLDCONTEXT && OLDCONTEXT.containerSelector && OLDCONTEXT.containerSelector != "")
+                    newContext.containerSelector = OLDCONTEXT.containerSelector + ">" + key
 
-                    if (typeof(value) == "object") {
-                        if (!newContext.containerSelector)
-                            newContext.containerSelector = key;
+                if (typeof(value) == "object") {
+                    if (!newContext.containerSelector)
+                        newContext.containerSelector = key;
 
-                        return glanceSet(cast, value, context, newContext);
-                    }
-                    else {
-                        return trySet(cast, key, value, newContext)
-                    }
+                    return glanceSet(cast, value, context, newContext);
                 }
-            ), Promise.resolve());
+                else {
+                    return trySet(cast, key, value, newContext)
+                }
+            })
         }
-    }), Promise.resolve())
+    })
 }
 
-var setStrategies = [
-    glanceSet
-];
+var setStrategies = [glanceSet];
 
 class Cast {
     constructor(options) {
@@ -57,39 +54,28 @@ class Cast {
         this.beforeAll = options.beforeAll || [];
         this.afterAll = options.afterAll || [];
 
-        this.literals = options.literals || {};
-
-
         this.setAfterHooks = options.setAfterHooks || [];
+        this.literals = options.literals || [];
     }
 
     apply(state) {
-        var states;
-
-        if (Array.isArray(state))
-            states = state;
-        else
-            states = [state];
+        var states = [].concat(state);
 
         var contexts = [];
 
-        return states.reduce((p1, state)=> p1.then(() => {
+        return states.resolveSeries((state) => {
                 let context = {
                     desiredState: state,
                     currentState: {}
                 };
 
-                return this.beforeAll.reduce((p1, beforeAllHook)=> p1.then(() => beforeAllHook(this, context)), Promise.resolve())
-                    .then(()=> this._eachSetStrategy(this, state, context))
-                    .then(()=> {
-                        return this.afterAll.reduce((p1, afterAllHook) => p1.then(()=> {
-                            context = afterAllHook(this, context)
-                        }), Promise.resolve())
-                    })
+                return this.beforeAll.resolveSeries(hook => hook(this, context))
+                    .then(()=> setStrategies.resolveSeries((hook)=> hook(this, state, context)))
+                    .then(()=> this.afterAll.resolveSeries((hook)=> hook(this, context)))
                     .then(()=> contexts.push(context))
-            }), Promise.resolve())
+            })
             .then(function() {
-                if(contexts.length == 1) {
+                if (contexts.length == 1) {
                     return contexts[0].currentState;
                 }
                 else {
@@ -104,10 +90,6 @@ class Cast {
 
     addSetAfterHook(func) {
         this.setAfterHooks.push(func);
-    }
-
-    _eachSetStrategy(context, state, cast) {
-        return setStrategies.reduce((p1, setStrategy)=> p1.then(()=> setStrategy(context, state, cast)), Promise.resolve());
     }
 }
 

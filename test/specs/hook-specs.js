@@ -37,7 +37,31 @@ describe('Hooks', function() {
             .then(function() {
                 return cast.glance.webdriverio.getTitle().should.eventually.equal("Test")
             })
-    })
+    });
+
+    it("should chain before all hooks", function() {
+        cast = new Cast(Object.assign({
+            beforeAll: [
+                function(cast, context) {
+                    context.desiredState["$url"] = context.desiredState["$url"] + "before";
+                },
+                function(cast, context) {
+                    context.desiredState["$url"] = context.desiredState["$url"] + "-test";
+                },
+                function(cast, context) {
+                    context.desiredState["$url"] = context.desiredState["$url"] + ".html";
+                }
+            ]
+
+        }, options));
+
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/"
+            })
+            .then(function() {
+                return cast.glance.webdriverio.getTitle().should.eventually.equal("Test")
+            })
+    });
 
     it("should allow hooking after all", function() {
         cast = new Cast(Object.assign({
@@ -51,14 +75,37 @@ describe('Hooks', function() {
 
         }, options));
 
-        return cast.apply({
-                "$url": "file:///" + __dirname + "/examples/after-test.html"
-            })
+        return cast.apply({})
             .then(function(states) {
-                console.log(states)
                 return states.should.deep.equal({
                     "foo": "bar"
                 })
             })
-    })
+    });
+
+    it("should chain after hooks", function() {
+        cast = new Cast(Object.assign({
+            afterAll: [
+                function(cast, context) {
+                    context.currentState = {"foo": "bar"};
+                },
+                function(cast, context) {
+                    context.currentState.abc = "123";
+                },
+                function(cast, context) {
+                    context.currentState.another =  "one";
+                }
+            ]
+
+        }, options));
+
+        return cast.apply({})
+            .then(function(states) {
+                return states.should.deep.equal({
+                    "foo": "bar",
+                    "abc": "123",
+                    "another": "one"
+                })
+            })
+    });
 });
