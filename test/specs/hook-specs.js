@@ -23,9 +23,8 @@ describe('Hooks', function() {
     it("should allow hooking before all", function() {
         cast = new Cast(Object.assign({
             beforeAll: [
-                function(cast, context) {
-                    context.desiredState["$url"] = context.desiredState["$url"].replace("test.html", "before-test.html")
-                    return context;
+                function(cast, store) {
+                    store.desiredState["$url"] = store.desiredState["$url"].replace("test.html", "before-test.html")
                 }
             ]
 
@@ -42,14 +41,14 @@ describe('Hooks', function() {
     it("should chain before all hooks", function() {
         cast = new Cast(Object.assign({
             beforeAll: [
-                function(cast, context) {
-                    context.desiredState["$url"] = context.desiredState["$url"] + "before";
+                function(cast, store) {
+                    store.desiredState["$url"] = store.desiredState["$url"] + "before";
                 },
-                function(cast, context) {
-                    context.desiredState["$url"] = context.desiredState["$url"] + "-test";
+                function(cast, store) {
+                    store.desiredState["$url"] = store.desiredState["$url"] + "-test";
                 },
-                function(cast, context) {
-                    context.desiredState["$url"] = context.desiredState["$url"] + ".html";
+                function(cast, store) {
+                    store.desiredState["$url"] = store.desiredState["$url"] + ".html";
                 }
             ]
 
@@ -66,10 +65,9 @@ describe('Hooks', function() {
     it("should allow hooking after all", function() {
         cast = new Cast(Object.assign({
             afterAll: [
-                function(cast, context) {
-
-                    context.currentState = {"foo": "bar"};
-                    return context;
+                function(cast, store) {
+                    store.currentState = {"foo": "bar"};
+                    return store;
                 }
             ]
 
@@ -86,14 +84,14 @@ describe('Hooks', function() {
     it("should chain after hooks", function() {
         cast = new Cast(Object.assign({
             afterAll: [
-                function(cast, context) {
-                    context.currentState = {"foo": "bar"};
+                function(cast, store) {
+                    store.currentState = {"foo": "bar"};
                 },
-                function(cast, context) {
-                    context.currentState.abc = "123";
+                function(cast, store) {
+                    store.currentState.abc = "123";
                 },
-                function(cast, context) {
-                    context.currentState.another =  "one";
+                function(cast, store) {
+                    store.currentState.another =  "one";
                 }
             ]
 

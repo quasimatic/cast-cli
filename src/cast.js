@@ -1,51 +1,43 @@
 import Glance from "@quasimatic/glance";
 import './promise-array';
 
-function trySet(cast, key, value, context) {
+function trySet(cast, key, value, store) {
     var glance = cast.glance;
 
     var fullKey = key;
-    if (context.containerSelector && context.containerSelector != "")
-        fullKey = context.containerSelector + ">" + key;
+
+    if (store.context.length > 0)
+        fullKey = store.context.join(">") + ">" + key;
 
     return glance.set(fullKey, value)
         .then(() => cast.setAfterHooks.resolveSeries(hook => hook(cast, key, value)));
 }
 
-function glanceSet(cast, state, context, OLDCONTEXT) {
-    let glance = cast.glance;
-
+function glanceSet(cast, state, store, target) {
     return Object.keys(state).resolveSeries(key => {
-        if (cast.literals[key]) {
-            return Promise.resolve(cast.literals[key](this, key, context[key], OLDCONTEXT));
-        }
-        else {
-            let values = state[key];
-            if (!Array.isArray(values)) {
-                values = [values]
+        let values = [].concat(state[key]);
+
+        return values.resolveSeries(value => {
+            var newTarget = {
+                key: key,
+                value: state[key],
+                context: target ? target.context : []
+            };
+
+            if (typeof(value) == "object") {
+                newTarget.context.push(key);
+                return glanceSet(cast, value, store, newTarget);
             }
-
-            return values.resolveSeries(value => {
-                var newContext = {key: key};
-
-                if (OLDCONTEXT && OLDCONTEXT.containerSelector && OLDCONTEXT.containerSelector != "")
-                    newContext.containerSelector = OLDCONTEXT.containerSelector + ">" + key
-
-                if (typeof(value) == "object") {
-                    if (!newContext.containerSelector)
-                        newContext.containerSelector = key;
-
-                    return glanceSet(cast, value, context, newContext);
-                }
-                else {
-                    return trySet(cast, key, value, newContext)
-                }
-            })
-        }
+            else {
+                return trySet(cast, key, value, newTarget)
+            }
+        })
     })
 }
 
-var setStrategies = [glanceSet];
+var setStrategies = [
+    glanceSet
+];
 
 class Cast {
     constructor(options) {
@@ -59,27 +51,26 @@ class Cast {
     }
 
     apply(state) {
+        var stores = [];
         var states = [].concat(state);
 
-        var contexts = [];
-
         return states.resolveSeries((state) => {
-                let context = {
+                let store = {
                     desiredState: state,
                     currentState: {}
                 };
 
-                return this.beforeAll.resolveSeries(hook => hook(this, context))
-                    .then(()=> setStrategies.resolveSeries((hook)=> hook(this, state, context)))
-                    .then(()=> this.afterAll.resolveSeries((hook)=> hook(this, context)))
-                    .then(()=> contexts.push(context))
+                return this.beforeAll.resolveSeries(beforeAll => beforeAll(this, store))
+                    .then(()=> setStrategies.resolveSeries(targetStrategy => targetStrategy(this, state, store)))
+                    .then(()=> this.afterAll.resolveSeries(afterAll => afterAll(this, store)))
+                    .then(()=> stores.push(store))
             })
             .then(function() {
-                if (contexts.length == 1) {
-                    return contexts[0].currentState;
+                if (stores.length == 1) {
+                    return stores[0].currentState;
                 }
                 else {
-                    return contexts.map(c => c.currentState);
+                    return stores.map(c => c.currentState);
                 }
             })
     }
