@@ -1,43 +1,30 @@
 import Glance from "@quasimatic/glance";
-import './promise-array';
+import GlanceConverter from "./converters/glance-converter";
+import "./promise-array";
 
-function trySet(cast, key, value, store) {
-    var glance = cast.glance;
+var converters = [GlanceConverter];
 
-    var fullKey = key;
-
-    if (store.context.length > 0)
-        fullKey = store.context.join(">") + ">" + key;
-
-    return glance.set(fullKey, value)
-        .then(() => cast.setAfterHooks.resolveSeries(hook => hook(cast, key, value)));
-}
-
-function glanceSet(cast, state, store, target) {
+function processTargets(cast, state, store, parentTarget) {
     return Object.keys(state).resolveSeries(key => {
         let values = [].concat(state[key]);
 
         return values.resolveSeries(value => {
-            var newTarget = {
+            var target = {
                 key: key,
                 value: state[key],
-                context: target ? target.context : []
+                context: parentTarget ? parentTarget.context : []
             };
 
-            if (typeof(value) == "object") {
-                newTarget.context.push(key);
-                return glanceSet(cast, value, store, newTarget);
-            }
-            else {
-                return trySet(cast, key, value, newTarget)
-            }
+            return converters.firstResolved(Converter => {
+                return new Converter().process(cast, target, store)
+                    .then((evaluatedTarget)=> {
+                        if (!evaluatedTarget.processed)
+                            return processTargets(cast, value, store, evaluatedTarget)
+                    })
+            })
         })
     })
 }
-
-var setStrategies = [
-    glanceSet
-];
 
 class Cast {
     constructor(options) {
@@ -61,7 +48,7 @@ class Cast {
                 };
 
                 return this.beforeAll.resolveSeries(beforeAll => beforeAll(this, store))
-                    .then(()=> setStrategies.resolveSeries(targetStrategy => targetStrategy(this, state, store)))
+                    .then(()=> processTargets(this, state, store))
                     .then(()=> this.afterAll.resolveSeries(afterAll => afterAll(this, store)))
                     .then(()=> stores.push(store))
             })
@@ -70,7 +57,7 @@ class Cast {
                     return stores[0].currentState;
                 }
                 else {
-                    return stores.map(c => c.currentState);
+                    return stores.map(s => s.currentState);
                 }
             })
     }

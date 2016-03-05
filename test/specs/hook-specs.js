@@ -1,4 +1,4 @@
-import Cast from '../../src/cast';
+import Cast from "../../src/cast";
 
 let cast;
 
@@ -91,7 +91,7 @@ describe('Hooks', function() {
                     store.currentState.abc = "123";
                 },
                 function(cast, store) {
-                    store.currentState.another =  "one";
+                    store.currentState.another = "one";
                 }
             ]
 
