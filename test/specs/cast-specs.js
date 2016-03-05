@@ -35,7 +35,7 @@ describe('Cast', function() {
         });
     });
 
-    after(function(){
+    after(function() {
         cast.end();
     });
 
@@ -109,7 +109,7 @@ describe('Cast', function() {
                         "$url": "file:///" + __dirname + "/examples/page2.html",
                         "text-1": "Data 2"
                     }
-                ]);
+                ])
             })
             .then(function() {
                 return cast.glance.url("file:///" + __dirname + "/examples/page1.html")
