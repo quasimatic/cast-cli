@@ -89,9 +89,9 @@ describe('Cast', function() {
             })
     });
 
-    it("should support nested keys as a glance container", function() {
+    it("should support nested labels as a glance container", function() {
         return cast.apply({
-                "$url": "file:///" + __dirname + "/examples/custom-key.html",
+                "$url": "file:///" + __dirname + "/examples/custom-label.html",
                 "wrapper-1": {
                     "text-1": "Data 1",
                     "text-2": "Data 2"

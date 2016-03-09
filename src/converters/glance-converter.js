@@ -1,34 +1,34 @@
 export default {
     set(cast, target, store) {
-        var key = target.key;
+        var label = target.label;
         var value = target.value;
         var glance = cast.glance;
 
-        var fullKey = key;
+        var fullLabel = label;
 
         if (target.context.length > 0)
-            fullKey = target.context.join(">") + ">" + key;
+            fullLabel = target.context.join(">") + ">" + label;
 
-        return glance.set(fullKey, value).then(function() {
+        return glance.set(fullLabel, value).then(function() {
             target.handled = true;
             return target;
         })
     },
 
     get(cast, target, store) {
-        var key = target.key;
+        var label = target.label;
         var context = target.context;
         var glance = cast.glance;
 
-        var fullKey = key;
+        var fullLabel = label;
 
         if (target.context.length > 0)
-            fullKey = target.context.join(">") + ">" + key;
+            fullLabel = target.context.join(">") + ">" + label;
 
-        return glance.get(fullKey)
+        return glance.get(fullLabel)
             .then(currentValue => {
                 return {
-                    key: key,
+                    label: label,
                     value: currentValue,
                     context: context,
                     handled: true
@@ -38,7 +38,7 @@ export default {
 
     process(cast, target, store) {
         if (typeof(target.value) == "object") {
-            target.context.push(target.key);
+            target.context.push(target.label);
             return Promise.resolve(target);
         }
 

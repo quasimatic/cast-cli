@@ -6,7 +6,7 @@ var converters = [GlanceConverter];
 
 function getTargetHooks(cast, target) {
     return cast.targetHooks.filter(function(hook) {
-        return !hook.labelFilter || target.key == hook.labelFilter;
+        return !hook.labelFilter || target.label == hook.labelFilter;
     })
 }
 
@@ -15,12 +15,12 @@ function processTargets(cast, state, store, parentTarget) {
             context: [],
             hooks: []
         };
-    return Object.keys(state).resolveSeries(key => {
-        let values = [].concat(state[key]);
+    return Object.keys(state).resolveSeries(label => {
+        let values = [].concat(state[label]);
 
         return values.resolveSeries(value => {
             var target = {
-                key: key,
+                label: label,
                 value: value,
                 context: parentTarget.context
             };

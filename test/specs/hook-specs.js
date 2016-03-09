@@ -116,7 +116,7 @@ describe("Target hooks", function() {
         cast = new Cast(Object.assign({
             targetHooks: [{
                 labelFilter: 'after-hook-text-1',
-                after: function(cast, key, value) {
+                after: function(cast, target) {
                     return cast.glance.click("button-change");
                 }
             }]
@@ -164,10 +164,10 @@ describe("Target hooks", function() {
                     target.continue = true;
                 },
                 beforeEach: function(cast, target, store) {
-                    target.key = "$url";
+                    target.label = "$url";
                 },
                 afterEach: function(cast, target, store) {
-                    return cast.glance.set(target.key, target.value).then(function() {
+                    return cast.glance.set(target.label, target.value).then(function() {
                         return cast.glance.webdriverio.getTitle().then(function(title) {
                             values.push(title);
                         })
@@ -196,7 +196,7 @@ describe.skip("Custom Context", function() {
         cast = new Cast(Object.assign({}, options));
 
         return cast.apply({
-                "$url": "file:///" + __dirname + "/examples/custom-key.html",
+                "$url": "file:///" + __dirname + "/examples/custom-label.html",
                 "First Wrapper": {
                     "text-1": "Data 1",
                     "text-2": "Data 2"
