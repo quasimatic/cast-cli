@@ -106,6 +106,7 @@ describe('Cast', function() {
     });
 
     it("should go to multiple urls and set value", function() {
+        this.timeout(10000)
         return cast.apply({"$url": "file:///" + __dirname + "/examples/page1.html"})
             .then(function() {
                 return cast.apply([
