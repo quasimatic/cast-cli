@@ -2,37 +2,22 @@ import Cast from '../../src/cast';
 
 let cast;
 
+let options = {
+    capabilities: [{
+        browserName: 'phantomjs'
+    }],
+    logLevel: 'silent',
+    coloredLogs: true,
+    screenshotPath: './errorShots/',
+    baseUrl: 'http://localhost',
+    waitforTimeout: 5000
+}
+
 describe('Cast', function() {
     this.timeout(5000);
 
     before(function() {
-        cast = new Cast({
-            capabilities: [{
-                browserName: 'phantomjs'
-            }],
-            logLevel: 'silent',
-            coloredLogs: true,
-            screenshotPath: './errorShots/',
-            baseUrl: 'http://localhost',
-            waitforTimeout: 5000,
-            setAfterHooks: [
-                function(cast, key, value) {
-                    return cast.glance.webdriverio.getTitle().then(function(title) {
-                        if (title == "Title needs to change") {
-                            return cast.glance.click("Change Title");
-                        }
-                    });
-                },
-
-                function(cast, key, value) {
-                    if (key == "text-1") {
-                        return cast.glance.click("button-save").catch(function(err) {
-                            return Promise.resolve();
-                        });
-                    }
-                }
-            ]
-        });
+        cast = new Cast(options);
     });
 
     after(function() {
@@ -45,6 +30,17 @@ describe('Cast', function() {
             })
             .then(() => cast.glance.webdriverio.getTitle())
             .should.eventually.equal("Page 1")
+    })
+
+    it("should go to multiple urls", function() {
+        return cast.apply({
+                "$url": [
+                    "file:///" + __dirname + "/examples/page1.html",
+                    "file:///" + __dirname + "/examples/page2.html"
+                ]
+            })
+            .then(() => cast.glance.webdriverio.getTitle())
+            .should.eventually.equal("Page 2")
     })
 
     it("should set value", function() {
@@ -73,6 +69,18 @@ describe('Cast', function() {
     });
 
     it("should support url hooks", function() {
+        cast = new Cast(Object.assign({
+            targetHooks: [{
+                after: function(cast, target) {
+                    return cast.glance.webdriverio.getTitle().then(function(title) {
+                        if (title == "Title needs to change") {
+                            return cast.glance.click("Change Title");
+                        }
+                    });
+                }
+            }]
+        }, options));
+
         return cast.apply({
                 "$url": "file:///" + __dirname + "/examples/url-hook.html"
             })
@@ -120,22 +128,4 @@ describe('Cast', function() {
                     .get("text-1").should.eventually.equal("Data 2");
             })
     });
-
-    it("should have set after hooks", function() {
-        cast.addSetAfterHook(function(cast, key, value) {
-            if (key == "after-hook-text-1") {
-                return cast.glance.click("button-change");
-            }
-        });
-
-        return cast.apply([
-                {
-                    "$url": "file:///" + __dirname + "/examples/set-hooks.html",
-                    "after-hook-text-1": "Data"
-                }
-            ])
-            .then(function() {
-                return cast.glance.get("text-1").should.eventually.equal("Data saved");
-            });
-    })
 });

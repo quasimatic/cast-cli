@@ -1,4 +1,4 @@
-export default class glanceConverter {
+export default {
     set(cast, target, store) {
         var key = target.key;
         var value = target.value;
@@ -9,13 +9,11 @@ export default class glanceConverter {
         if (target.context.length > 0)
             fullKey = target.context.join(">") + ">" + key;
 
-        return glance.set(fullKey, value)
-            .then(() => cast.setAfterHooks.resolveSeries(hook => hook(cast, key, value)))
-            .then(()=> {
-                target.processed = true;
-                return target;
-            });
-    }
+        return glance.set(fullKey, value).then(function() {
+            target.handled = true;
+            return target;
+        })
+    },
 
     get(cast, target, store) {
         var key = target.key;
@@ -33,10 +31,10 @@ export default class glanceConverter {
                     key: key,
                     value: currentValue,
                     context: context,
-                    processed: true
+                    handled: true
                 };
             });
-    }
+    },
 
     process(cast, target, store) {
         if (typeof(target.value) == "object") {

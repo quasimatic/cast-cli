@@ -13,7 +13,7 @@ let options = {
     waitforTimeout: 5000
 };
 
-describe('Hooks', function() {
+describe('beforeAll Hooks', function() {
     this.timeout(5000);
 
     after(function() {
@@ -61,7 +61,9 @@ describe('Hooks', function() {
                 return cast.glance.webdriverio.getTitle().should.eventually.equal("Test")
             })
     });
+});
 
+describe("afterAll Hooks", function() {
     it("should allow hooking after all", function() {
         cast = new Cast(Object.assign({
             afterAll: [
@@ -107,3 +109,123 @@ describe('Hooks', function() {
             })
     });
 });
+
+describe("Target hooks", function() {
+    it("should call leave target hooks", function() {
+        this.timeout(10000)
+        cast = new Cast(Object.assign({
+            targetHooks: [{
+                labelFilter: 'after-hook-text-1',
+                after: function(cast, key, value) {
+                    return cast.glance.click("button-change");
+                }
+            }]
+        }, options));
+
+        return cast.apply([
+                {
+                    "$url": "file:///" + __dirname + "/examples/set-hooks.html",
+                    "after-hook-text-1": "Data"
+                }
+            ])
+            .then(function() {
+                return cast.glance.get("text-1").should.eventually.equal("Data saved");
+            });
+    });
+
+    it("should call before target hooks", function() {
+        cast = new Cast(Object.assign({
+            targetHooks: [{
+                labelFilter: 'before-hook-text-1',
+                before: function(cast, target, store) {
+                    target.value = "Before " + target.value
+                }
+            }]
+        }, options));
+
+        return cast.apply([
+                {
+                    "$url": "file:///" + __dirname + "/examples/set-hooks.html",
+                    "before-hook-text-1": "Data"
+                }
+            ])
+            .then(function() {
+                return cast.glance.get("before-hook-text-1").should.eventually.equal("Before Data");
+            });
+    });
+
+    it("should setup after hook for child targets", function() {
+        this.timeout(10000);
+        var values = [];
+        cast = new Cast(Object.assign({
+            targetHooks: [{
+                labelFilter: 'parent-context',
+                before: function(cast, target, store) {
+                    target.continue = true;
+                },
+                beforeEach: function(cast, target, store) {
+                    target.key = "$url";
+                },
+                afterEach: function(cast, target, store) {
+                    return cast.glance.set(target.key, target.value).then(function() {
+                        return cast.glance.webdriverio.getTitle().then(function(title) {
+                            values.push(title);
+                        })
+                    })
+                }
+            }]
+        }, options));
+
+        return cast.apply([
+                {
+                    "parent-context": {
+                        "one": "file:///" +__dirname + "/examples/page1.html",
+                        "two" : "file:///" +__dirname + "/examples/page2.html"
+                    }
+                }
+            ])
+            .then(function() {
+                return values.should.deep.equal(["Page 1", "Page 2"])
+            });
+    })
+});
+
+describe.skip("Custom Context", function() {
+    this.timeout(10000)
+    it("should support changing the context", function() {
+        cast = new Cast(Object.assign({}, options));
+
+        return cast.apply({
+                "$url": "file:///" + __dirname + "/examples/custom-key.html",
+                "First Wrapper": {
+                    "text-1": "Data 1",
+                    "text-2": "Data 2"
+                }
+            })
+            .then(function() {
+                return cast.glance.get("wrapper-1>text-1").should.eventually.equal("Data 1")
+            })
+            .then(function() {
+                return cast.glance.get("wrapper-1>text-2").should.eventually.equal("Data 2")
+            })
+    });
+})
+
+
+/*
+ TargetHooks {
+ label
+ before
+ after
+ afterEach
+ beforeEach
+ set
+ get
+ apply
+ }
+
+ handled defaults to false but should be return true indicating value has been processed
+
+ before, beforeEach, apply, set and get can all maniuplate the target
+
+ */
