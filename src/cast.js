@@ -25,10 +25,13 @@ function processTargets(cast, state, store, parentTarget) {
                 context: parentTarget.context
             };
 
+            var targetHooks;
+
             return converters.firstResolved(converter => {
                 return parentTarget.hooks.resolveSeries(hook => hook.beforeEach(cast, target, store))
                     .then(() => {
-                        return getTargetHooks(cast, target).resolveSeries(hook => hook.before(cast, target, store))
+                        targetHooks = getTargetHooks(cast, target);
+                        return targetHooks.resolveSeries(hook => hook.before(cast, target, store))
                     })
                     .then(()=> {
                         if(target.continue) {
@@ -39,15 +42,14 @@ function processTargets(cast, state, store, parentTarget) {
                         }
                     })
                     .then(evaluatedTarget => {
-                        let evaluatedTargetHooks = getTargetHooks(cast, evaluatedTarget);
-                        return evaluatedTargetHooks.resolveSeries(hook => hook.after(cast, evaluatedTarget, store))
+                        return targetHooks.resolveSeries(hook => hook.after(cast, evaluatedTarget, store))
                             .then(()=> {
                                 if (!evaluatedTarget.handled) {
                                     evaluatedTarget.hooks = [];
 
                                     evaluatedTarget.hooks = evaluatedTarget.hooks.concat(parentTarget.hooks)
 
-                                    evaluatedTarget.hooks = evaluatedTarget.hooks.concat(evaluatedTargetHooks);
+                                    evaluatedTarget.hooks = evaluatedTarget.hooks.concat(targetHooks);
 
                                     return processTargets(cast, value, store, evaluatedTarget)
                                 }
