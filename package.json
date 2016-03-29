@@ -1,6 +1,6 @@
 {
   "name": "@quasimatic/cast",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Set and get state of a web app",
   "bin": {
     "cast": "lib/cast.js"
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/quasimatic/cast#readme",
   "dependencies": {
-    "@quasimatic/glance": "0.2.6",
+    "@quasimatic/glance": "0.2.7",
     "command-line-args": "^2.1.6"
   },
   "devDependencies": {
