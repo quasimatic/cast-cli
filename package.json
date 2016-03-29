@@ -3,12 +3,12 @@
   "version": "0.0.7",
   "description": "Set and get state of a web app",
   "bin": {
-    "cast": "cast.js"
+    "cast": "lib/cast.js"
   },
-  "main": "lib/cast.js",
   "scripts": {
     "build": "babel src -d lib",
-    "test": "npm run build && mocha --compilers js:babel-register --require ./test/test_helper.js test/**/*.js"
+    "pretest": "npm run build",
+    "test": "mocha --compilers js:babel-register --require ./test/test_helper.js --recursive test"
   },
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/quasimatic/cast#readme",
   "dependencies": {
-    "@quasimatic/glance": "0.2.0",
+    "@quasimatic/glance": "0.2.6",
     "command-line-args": "^2.1.6"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "babel-preset-es2015": "6.6.0",
     "babel-register": "^6.7.2",
     "chai": "^3.5.0",
-    "chai-as-promised": "^5.2.0",
+    "chai-as-promised": "^5.3.0",
     "es6-promise": "^3.1.2",
     "mocha": "^2.4.5"
   }

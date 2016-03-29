@@ -1,134 +1,29 @@
-import Glance from "@quasimatic/glance";
-import GlanceConverter from "./converters/glance-converter";
-import "./promise-array";
+#!/usr/bin/env node
+import {Cast} from '@quasimatic/glance';
 
-var converters = [GlanceConverter];
+var fs = require('fs');
+var commandLineArgs = require('command-line-args');
 
-function getTargetHooks(cast, target) {
-    return cast.targetHooks.filter(function(hook) {
-        return !hook.labelFilter || target.label == hook.labelFilter;
-    })
-}
+var cli = commandLineArgs([
+    {name: 'files', type: String, multiple: true, defaultOption: true},
+]);
 
-function processTargets(cast, state, store, parentTarget) {
-    parentTarget = parentTarget || {
-            context: [],
-            hooks: []
-        };
-    return Object.keys(state).resolveSeries(label => {
-        let values = [].concat(state[label]);
+var options = cli.parse()
+var files = options.files;
+var config = require(process.cwd() + "/cast.conf.js")
 
-        return values.resolveSeries(value => {
-            var target = {
-                label: label,
-                value: value,
-                context: parentTarget.context
-            };
+var cast = new Cast(config);
 
-            var targetHooks;
-
-            return converters.firstResolved(converter => {
-                return parentTarget.hooks.resolveSeries(hook => hook.beforeEach(cast, target, store))
-                    .then(() => {
-                        targetHooks = getTargetHooks(cast, target);
-                        return targetHooks.resolveSeries(hook => hook.before(cast, target, store))
-                    })
-                    .then(()=> {
-                        if(target.continue) {
-                           return target;
-                        }
-                        else {
-                            return converter.process(cast, target, store);
-                        }
-                    })
-                    .then(evaluatedTarget => {
-                        return targetHooks.resolveSeries(hook => hook.after(cast, evaluatedTarget, store))
-                            .then(()=> {
-                                if (!evaluatedTarget.handled) {
-                                    evaluatedTarget.hooks = [];
-
-                                    evaluatedTarget.hooks = evaluatedTarget.hooks.concat(parentTarget.hooks)
-
-                                    evaluatedTarget.hooks = evaluatedTarget.hooks.concat(targetHooks);
-
-                                    return processTargets(cast, value, store, evaluatedTarget)
-                                }
-
-                                return Promise.resolve(evaluatedTarget);
-                            })
-                            .then(evaluatedTarget => {
-                                return parentTarget.hooks.resolveSeries(hook => hook.afterEach(cast, evaluatedTarget, store))
-                            });
-                    })
-            })
-        })
-    })
-}
-
-class Cast {
-    constructor(options) {
-        this.glance = new Glance(options);
-
-        this.beforeAll = options.beforeAll || [];
-        this.afterAll = options.afterAll || [];
-
-        this.targetHooks = (options.targetHooks || []).map(function(hook) {
-            return Object.assign({
-                labelFilter: null,
-                before: function() {
-                },
-                after: function() {
-                },
-                beforeEach: function() {
-                },
-                afterEach: function() {
-                },
-                set: function() {
-                },
-                get: function() {
-                },
-                apply: function() {
-                }
-            }, hook)
+files.reduce(function(p1, file) {
+        var data = fs.readFileSync(file, "utf8");
+        return p1.then(function() {
+            return cast.apply(JSON.parse(data))
         });
-
-        this.targetEnter = options.targetEnter || [];
-        this.targetLeave = options.targetLeave || [];
-
-        this.literals = options.literals || [];
-
-        this.logLevel = options.logLevel || "error";
-        this.glance.setLogLevel(this.logLevel);
+    },
+    Promise.resolve()).then(function() {
+        cast.end();
+    },
+    function(err) {
+        console.error(err.message);
     }
-
-    apply(state) {
-        var stores = [];
-        var states = [].concat(state);
-
-        return states.resolveSeries((state) => {
-                let store = {
-                    desiredState: state,
-                    currentState: {}
-                };
-
-                return this.beforeAll.resolveSeries(beforeAll => beforeAll(this, store))
-                    .then(()=> processTargets(this, state, store))
-                    .then(()=> this.afterAll.resolveSeries(afterAll => afterAll(this, store)))
-                    .then(()=> stores.push(store))
-            })
-            .then(function() {
-                if (stores.length == 1) {
-                    return stores[0].currentState;
-                }
-                else {
-                    return stores.map(s => s.currentState);
-                }
-            })
-    }
-
-    end() {
-        return this.glance.webdriverio.end();
-    }
-}
-
-export default Cast;
+)
