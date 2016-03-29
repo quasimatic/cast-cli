@@ -1,6 +1,6 @@
 {
   "name": "@quasimatic/cast",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Set and get state of a web app",
   "bin": {
     "cast": "lib/cast.js"
