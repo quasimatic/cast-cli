@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {Cast} from '@quasimatic/glance';
+import {Cast} from 'glance-webdriver';
 
 var fs = require('fs');
 var commandLineArgs = require('command-line-args');
