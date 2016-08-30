@@ -4,11 +4,10 @@ import {Cast} from 'glance-webdriver';
 var fs = require('fs');
 var commandLineArgs = require('command-line-args');
 
-var cli = commandLineArgs([
+var options = commandLineArgs([
     {name: 'files', type: String, multiple: true, defaultOption: true},
 ]);
 
-var options = cli.parse()
 var files = options.files;
 var config = require(process.cwd() + "/cast.conf.js")
 
