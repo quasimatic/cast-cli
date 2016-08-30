@@ -1,6 +1,6 @@
 {
   "name": "cast-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Set and get state of a web app",
   "bin": {
     "cast": "lib/cast.js"
