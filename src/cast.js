@@ -1,28 +1,24 @@
 #!/usr/bin/env node
 import {Cast} from 'glance-webdriver';
 
-var fs = require('fs');
-var commandLineArgs = require('command-line-args');
+let fs = require('fs');
+let commandLineArgs = require('command-line-args');
 
-var options = commandLineArgs([
+let options = commandLineArgs([
     {name: 'files', type: String, multiple: true, defaultOption: true},
 ]);
 
-var files = options.files;
-var config = require(process.cwd() + "/cast.conf.js")
+let files = options.files;
+let config = require(process.cwd() + "/cast.conf.js");
 
-var cast = new Cast(config);
+let promise = config.init ? config.init(config) : Promise.resolve(config);
 
-files.reduce(function(p1, file) {
-        var data = fs.readFileSync(file, "utf8");
-        return p1.then(function() {
-            return cast.apply(JSON.parse(data))
-        });
-    },
-    Promise.resolve()).then(function() {
-        cast.end();
-    },
-    function(err) {
-        console.error(err.message);
-    }
-)
+promise.then((config) => {
+    let cast = new Cast(config);
+
+    files.reduce((p1, file) => {
+            let data = fs.readFileSync(file, "utf8");
+            return p1.then(() => cast.apply(JSON.parse(data)));
+        },
+        Promise.resolve()).then(() => cast.end(), err => console.error(err.message));
+});
