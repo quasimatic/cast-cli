@@ -16,9 +16,6 @@ let promise = config.init ? config.init(config) : Promise.resolve(config);
 promise.then((config) => {
     let cast = new Cast(config);
 
-    files.reduce((p1, file) => {
-            let data = fs.readFileSync(file, "utf8");
-            return p1.then(() => cast.apply(JSON.parse(data)));
-        },
-        Promise.resolve()).then(() => cast.end(), err => console.error(err.message));
+    return files.reduce((p1, file) => p1.then(() => cast.apply(JSON.parse(fs.readFileSync(file, "utf8")))), Promise.resolve())
+        .then(() => cast.end(), err => console.error(err.message));
 });
