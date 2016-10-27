@@ -17,5 +17,8 @@ promise.then((config) => {
     let cast = new Cast(config);
 
     return files.reduce((p1, file) => p1.then(() => cast.apply(JSON.parse(fs.readFileSync(file, "utf8")))), Promise.resolve())
-        .then(() => cast.end(), err => console.error(err.message));
+        .then(() => cast.end(), err => {
+            console.error(err.message);
+            return cast.end();
+        });
 });
